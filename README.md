@@ -39,7 +39,7 @@ It demonstrates all the core building blocks:
 
 ```mermaid
 graph TD
-    A["Input: 悟空道：你这泼猴，竟敢大闹天宫 (128 chars)"] --> B["Token Embedding + Position Embedding<br/>Each char → 128-dim vector"]
+    A["Input: 三藏道：悟空，前面山高路险，须要仔细 (128 chars)"] --> B["Token Embedding + Position Embedding<br/>Each char → 128-dim vector"]
     B --> C
 
     subgraph C["6 × Transformer Block"]
