@@ -1,0 +1,13 @@
+[project]
+name = "hello-world-llm"
+version = "1.0.0"
+description = "A character-level neural language model built from scratch — trained on 西游记"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "torch>=2.11.0",
+]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu130"
+default = true
