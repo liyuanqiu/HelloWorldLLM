@@ -41,11 +41,11 @@ const TEMPERATURE  = 0.8;    // Generation temperature (lower = more conservativ
 const GEN_LENGTH   = 500;    // Number of characters to generate
 
 // ═══════════════════════════════════════════════════════════════════════
-// Training Data (Shakespeare — public domain)
+// Training Data (西游记 — public domain)
 // ═══════════════════════════════════════════════════════════════════════
 
 const TRAINING_TEXT = readFileSync(
-  resolve(__dirname, '..', 'data', 'shakespeare.txt'), 'utf-8'
+  resolve(__dirname, '..', 'data', 'xiyouji.txt'), 'utf-8'
 );
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -420,7 +420,7 @@ console.log(`  Context    : ${BLOCK_SIZE} characters`);
 console.log(`  Embedding  : ${N_EMBD}-dimensional vectors`);
 console.log(`  Hidden     : ${HIDDEN_DIM} neurons (tanh activation)`);
 console.log(`  Parameters : ${totalParams.toLocaleString()}`);
-console.log(`  Data       : ${data.length.toLocaleString()} characters of Shakespeare`);
+console.log(`  Data       : ${data.length.toLocaleString()} characters of 西游记`);
 console.log('');
 
 // ── Training loop ──
@@ -455,18 +455,18 @@ const trainTime = ((Date.now() - t0) / 1000).toFixed(1);
 console.log(`\n✅ Training complete in ${trainTime}s`);
 
 // ── Generate text ──
-console.log('\n✨ Generated text (the model continues from "To be"):');
+console.log('\n✨ Generated text (the model continues from "悟空"):');
 console.log('───────────────────────────────────────────────────────────');
-console.log(generate('To be', GEN_LENGTH, TEMPERATURE));
+console.log(generate('悟空', GEN_LENGTH, TEMPERATURE));
 console.log('───────────────────────────────────────────────────────────');
 
 // ── Show what the model learned ──
 console.log('\n📊 What the model learned:');
 console.log('   The model assigns probabilities to every possible next character.');
 console.log('   After training, it has learned patterns like:');
-console.log('   - Common letter sequences (th, he, in, er, an, ...)');
-console.log('   - Word boundaries (spaces after words)');
-console.log('   - Line structure (newlines at end of lines)');
+console.log('   - Common character sequences (的, 了, 不, 一, ...)');
+console.log('   - Punctuation patterns (，。！？)');
+console.log('   - Line and paragraph structure');
 console.log('');
 console.log('🔬 To scale this up to a real LLM, you would:');
 console.log('   1. Add self-attention (the key innovation of Transformers)');
