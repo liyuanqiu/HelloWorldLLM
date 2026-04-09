@@ -1,89 +1,106 @@
 # 🤖 Hello World LLM
 
-A character-level neural language model built **from scratch** in Python.
-PyTorch is used only as a GPU tensor library — all training logic
-(forward pass, backpropagation, SGD, generation) is implemented manually.
-
-Trained on the full text of 《西游记》(Journey to the West).
+A character-level **Transformer** (GPT architecture) built from scratch in Python.
+PyTorch is used as a GPU tensor library — the forward pass (attention, FFN, layernorm)
+is fully hand-written. Trained on the full text of 《西游记》(Journey to the West).
 
 ## Quick Start
 
 ```bash
 cd src
 uv sync
-uv run python main.py
+uv run python train.py         # Train → saves model/checkpoint.pt
+uv run python generate.py 悟空  # Generate text from saved model
 ```
+
+Or all-in-one: `uv run python main.py`
 
 Requires an NVIDIA GPU with CUDA support.
 
 ## What is this?
 
-A minimal but complete implementation of a neural language model — the
-same fundamental concept behind GPT, Claude, and other large language models.
+A minimal but complete implementation of a GPT-style language model — the
+same architecture behind GPT, Claude, and other large language models.
 
 It demonstrates all the core building blocks:
 
 | Concept | What it does | Where in code |
 |---------|-------------|---------------|
-| **Tokenization** | Converts text to numbers | `encode()` / `decode()` |
-| **Embeddings** | Maps each character to a learned vector | `tok_emb`, `pos_emb` |
-| **Forward Pass** | Predicts next character probabilities | `forward()` |
-| **Backpropagation** | Computes gradients for learning | `backward()` |
-| **SGD Optimizer** | Updates weights to reduce loss | `sgd_update()` |
-| **Text Generation** | Produces new text character-by-character | `generate()` |
+| **Tokenization** | Converts text to numbers | `model.py: encode()` / `decode()` |
+| **Embeddings** | Maps each character to a learned vector | `model.py: tok_emb`, `pos_emb` |
+| **Self-Attention** | Dynamically focuses on relevant context | `model.py: attention()` |
+| **Feed-Forward Net** | Processes each position independently | `model.py: ffn()` |
+| **Layer Norm** | Stabilizes training of deep networks | `model.py: layernorm()` |
+| **Residual Connections** | Enables gradient flow through deep layers | `model.py: transformer_forward()` |
+| **Adam Optimizer** | Updates weights (hand-written) | `train.py: adam_step()` |
+| **Text Generation** | Produces text with top-k sampling | `generate.py: generate()` |
 
 ## Architecture
 
 ```
-Input: "悟空道：你这泼猴，竟敢"  (16 characters)
+Input: "悟空道：你这泼猴，竟敢大闹天宫"  (128 characters)
           │
           ▼
    ┌──────────────┐
-   │  Token Embed  │  Each char → 32-dim vector
-   │  + Pos Embed  │  Each position → 32-dim vector
-   └──────┬───────┘
-          │  Flatten to 512-dim vector
-          ▼
-   ┌──────────────┐
-   │ Hidden Layer  │  512 → 128 neurons, tanh activation
+   │  Token Embed  │  Each char → 128-dim vector
+   │  + Pos Embed  │  Each position → 128-dim vector
    └──────┬───────┘
           │
           ▼
-   ┌──────────────┐
-   │ Output Layer  │  128 → 4427 logits (one per unique character)
-   └──────┬───────┘
-          │  Softmax
+   ┌──────────────────────────────────────┐
+   │  6 × Transformer Block               │
+   │  ┌────────────────────────────────┐  │
+   │  │ LayerNorm → Multi-Head Attention│  │
+   │  │ (4 heads, causal mask)         │  │
+   │  │ + Residual Connection          │  │
+   │  ├────────────────────────────────┤  │
+   │  │ LayerNorm → FFN (ReLU)        │  │
+   │  │ 128 → 512 → 128              │  │
+   │  │ + Residual Connection          │  │
+   │  └────────────────────────────────┘  │
+   └──────┬───────────────────────────────┘
+          │
           ▼
-   P(next char) = [0.001, ..., 0.05, ..., 0.12, ...]
-                   '一'        '如'       '在'
+   ┌──────────────┐
+   │  LayerNorm   │
+   │  → Output    │  128 → 4427 logits
+   └──────┬───────┘
+          │  Softmax + Top-k sampling
+          ▼
+   P(next char) = [0.001, ..., 0.15, ..., 0.08, ...]
+                   '一'        '道'       '了'
 ```
 
 ## How it relates to real LLMs
 
 | This Model | Real LLMs (GPT-4, Claude) |
 |-----------|---------------------------|
-| ~780K parameters | Billions of parameters |
+| 2.3M parameters | Billions of parameters |
 | Character-level tokens | Sub-word tokens (BPE) |
-| 1 hidden layer | 96+ transformer layers |
-| No attention | Multi-head self-attention |
-| 16-char context | 128K+ token context |
-| SGD optimizer | AdamW optimizer |
+| 6 transformer layers | 96+ transformer layers |
+| 4 attention heads | 96+ attention heads |
+| 128-char context | 128K+ token context |
+| Hand-written Adam | AdamW with weight decay |
 | Single GPU (RTX 4090) | GPU cluster training |
+| ReLU activation | GELU / SwiGLU |
 
-The key missing piece is **self-attention** — the mechanism that allows the model
-to dynamically focus on relevant parts of the input. Adding attention is what
-turns a simple neural network into a Transformer.
+The architecture is the same — the difference is scale.
 
 ## Project Structure
 
 ```
 ├── src/
-│   ├── main.py          # Model: forward, backward, training, generation
+│   ├── model.py         # Transformer architecture, tokenizer, save/load
+│   ├── train.py         # Training loop, Adam optimizer
+│   ├── generate.py      # Text generation with top-k sampling
+│   ├── main.py          # All-in-one: train + generate
 │   ├── pyproject.toml   # Python project config (managed by uv)
 │   └── uv.lock          # Locked dependencies
 ├── data/
 │   └── xiyouji.txt      # 西游记 full text (training corpus)
-└── CLAUDE.md             # AI coding assistant instructions
+├── model/
+│   └── checkpoint.pt    # Trained model weights (9.4 MB)
+└── CLAUDE.md            # AI coding assistant instructions
 ```
 
 ## License
