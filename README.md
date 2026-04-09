@@ -37,38 +37,20 @@ It demonstrates all the core building blocks:
 
 ## Architecture
 
-```
-Input: "悟空道：你这泼猴，竟敢大闹天宫"  (128 characters)
-          │
-          ▼
-   ┌──────────────┐
-   │  Token Embed  │  Each char → 128-dim vector
-   │  + Pos Embed  │  Each position → 128-dim vector
-   └──────┬───────┘
-          │
-          ▼
-   ┌──────────────────────────────────────┐
-   │  6 × Transformer Block               │
-   │  ┌────────────────────────────────┐  │
-   │  │ LayerNorm → Multi-Head Attention│  │
-   │  │ (4 heads, causal mask)         │  │
-   │  │ + Residual Connection          │  │
-   │  ├────────────────────────────────┤  │
-   │  │ LayerNorm → FFN (ReLU)        │  │
-   │  │ 128 → 512 → 128              │  │
-   │  │ + Residual Connection          │  │
-   │  └────────────────────────────────┘  │
-   └──────┬───────────────────────────────┘
-          │
-          ▼
-   ┌──────────────┐
-   │  LayerNorm   │
-   │  → Output    │  128 → 4427 logits
-   └──────┬───────┘
-          │  Softmax + Top-k sampling
-          ▼
-   P(next char) = [0.001, ..., 0.15, ..., 0.08, ...]
-                   '一'        '道'       '了'
+```mermaid
+graph TD
+    A["Input: 悟空道：你这泼猴，竟敢大闹天宫 (128 chars)"] --> B["Token Embedding + Position Embedding<br/>Each char → 128-dim vector"]
+    B --> C
+
+    subgraph C["6 × Transformer Block"]
+        direction TB
+        D["LayerNorm → Multi-Head Self-Attention<br/>(4 heads, causal mask)<br/>+ Residual Connection"]
+        D --> E["LayerNorm → FFN (ReLU)<br/>128 → 512 → 128<br/>+ Residual Connection"]
+    end
+
+    C --> F["Final LayerNorm"]
+    F --> G["Output Projection: 128 → 4427 logits"]
+    G --> H["Softmax + Top-k Sampling → Next Character"]
 ```
 
 ## How it relates to real LLMs
